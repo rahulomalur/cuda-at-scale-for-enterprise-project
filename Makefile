@@ -2,7 +2,8 @@ NVCC        = nvcc
 CUDA_PATH   ?= /usr/local/cuda
 CXX_FLAGS   = -std=c++17
 INCLUDES    = -I$(CUDA_PATH)/include
-NPP_LIBS    = -lnppc -lnppif -lnppig
+LIB_PATH    = -L$(CUDA_PATH)/lib64 -L$(CUDA_PATH)/lib
+NPP_LIBS    = -lnppc -lnppial -lnppidei -lnppif -lnppig -lnppisu
 CV_LIBS     = $(shell pkg-config --libs opencv4 2>/dev/null || pkg-config --libs opencv)
 CV_INCLUDES = $(shell pkg-config --cflags opencv4 2>/dev/null || pkg-config --cflags opencv)
 
@@ -14,7 +15,7 @@ build: src/main.cu
 	@mkdir -p bin
 	$(NVCC) $(CXX_FLAGS) $(INCLUDES) $(CV_INCLUDES) \
 		src/main.cu -o $(TARGET) \
-		$(NPP_LIBS) $(CV_LIBS)
+		$(LIB_PATH) $(NPP_LIBS) $(CV_LIBS)
 	@echo "Build complete: $(TARGET)"
 
 run: build
