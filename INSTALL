@@ -1,0 +1,20 @@
+INSTALL - GPU Batch Blur
+
+Prerequisites:
+  - CUDA Toolkit >= 11.0  (includes NPP)
+  - OpenCV 4.x            (sudo apt install libopencv-dev)
+  - g++ / nvcc
+  - pkg-config
+
+Ubuntu/Debian:
+  sudo apt update
+  sudo apt install libopencv-dev pkg-config
+
+Build:
+  make build
+
+Run (auto-downloads dataset):
+  ./run.sh
+
+Manual run:
+  ./bin/blur.exe -i data/images -o data/output

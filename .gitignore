@@ -1,0 +1,11 @@
+# Build artifacts
+bin/*
+!bin/.gitkeep
+*.o
+*.exe
+
+# Data files (downloaded at runtime)
+data/images/*
+!data/images/.gitkeep
+data/output/*
+!data/output/.gitkeep
