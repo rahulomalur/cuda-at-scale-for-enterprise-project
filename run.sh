@@ -26,19 +26,48 @@ sizes = [256, 512, 1024]
 
 for i in range(100):
     h = w = sizes[i % len(sizes)]
-    if i % 4 == 0:
-        img = np.random.randint(0, 256, (h, w), dtype=np.uint8)
-    elif i % 4 == 1:
-        x = np.linspace(0, 255, w, dtype=np.uint8)
-        img = np.tile(x, (h, 1))
-    elif i % 4 == 2:
-        y = np.linspace(0, 255, h, dtype=np.uint8).reshape(-1, 1)
-        img = np.tile(y, (1, w))
-    else:
-        cx, cy = w // 2, h // 2
-        Y, X = np.ogrid[:h, :w]
-        r = np.sqrt((X - cx)**2 + (Y - cy)**2).astype(np.uint8)
-        img = (r * 3).astype(np.uint8)
+    img = np.zeros((h, w), dtype=np.uint8)
+
+    pattern = i % 5
+    if pattern == 0:
+        # Checkerboard — sharp edges, blur very obvious
+        block = max(8, w // 16)
+        for r in range(0, h, block):
+            for c in range(0, w, block):
+                if ((r // block) + (c // block)) % 2 == 0:
+                    img[r:r+block, c:c+block] = 255
+
+    elif pattern == 1:
+        # Sharp white circles on black
+        for _ in range(10):
+            cx = np.random.randint(50, w - 50)
+            cy = np.random.randint(50, h - 50)
+            r = np.random.randint(10, 60)
+            cv2.circle(img, (cx, cy), r, 255, -1)
+
+    elif pattern == 2:
+        # White text-like rectangles on black
+        for _ in range(20):
+            x1 = np.random.randint(0, w - 40)
+            y1 = np.random.randint(0, h - 15)
+            x2 = x1 + np.random.randint(20, 80)
+            y2 = y1 + np.random.randint(5, 20)
+            cv2.rectangle(img, (x1, y1), (x2, y2), 255, -1)
+
+    elif pattern == 3:
+        # Sharp diagonal stripes
+        stripe_w = max(4, w // 32)
+        for r in range(h):
+            for c in range(w):
+                if ((r + c) // stripe_w) % 2 == 0:
+                    img[r, c] = 255
+
+    elif pattern == 4:
+        # Grid of sharp dots
+        spacing = max(12, w // 20)
+        for r in range(spacing, h - spacing, spacing):
+            for c in range(spacing, w - spacing, spacing):
+                cv2.circle(img, (c, r), 3, 255, -1)
 
     fname = os.path.join(out_dir, f"sample_{i:03d}.png")
     cv2.imwrite(fname, img)

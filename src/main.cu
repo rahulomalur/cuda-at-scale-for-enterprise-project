@@ -39,14 +39,28 @@ void processImage(const std::string &inputPath, const std::string &outputPath)
                  cols, rows,
                  cudaMemcpyHostToDevice);
 
-    // Apply 3x3 Gaussian blur via NPP (GPU computation)
-    NppiSize roi    = {cols, rows};
-    NppStatus status = nppiFilterGauss_8u_C1R(
-        d_src, srcStep,
-        d_dst, dstStep,
-        roi,
-        NPP_MASK_SIZE_3_X_3
-    );
+    // Apply Gaussian blur via NPP — 5 passes of 15x15 kernel (GPU computation)
+    // Multiple passes create a strong, clearly visible blur effect
+    NppiSize roi      = {cols, rows};
+    int numPasses     = 5;
+    NppStatus status  = NPP_SUCCESS;
+
+    for (int p = 0; p < numPasses && status == NPP_SUCCESS; p++) {
+        // Ping-pong: src→dst on even passes, dst→src on odd passes
+        if (p % 2 == 0) {
+            status = nppiFilterGauss_8u_C1R(
+                d_src, srcStep, d_dst, dstStep, roi,
+                NPP_MASK_SIZE_15_X_15);
+        } else {
+            status = nppiFilterGauss_8u_C1R(
+                d_dst, dstStep, d_src, srcStep, roi,
+                NPP_MASK_SIZE_15_X_15);
+        }
+    }
+
+    // Result is in d_dst if numPasses is odd, d_src if even
+    Npp8u *d_result = (numPasses % 2 == 1) ? d_dst : d_src;
+    int resultStep  = (numPasses % 2 == 1) ? dstStep : srcStep;
 
     if (status != NPP_SUCCESS) {
         std::cerr << "[ERROR] NPP filter failed (" << status << "): " << inputPath << "\n";
@@ -58,7 +72,7 @@ void processImage(const std::string &inputPath, const std::string &outputPath)
     // Device → Host
     Mat result(rows, cols, CV_8UC1);
     cudaMemcpy2D(result.data, cols,
-                 d_dst, dstStep,
+                 d_result, resultStep,
                  cols, rows,
                  cudaMemcpyDeviceToHost);
 
